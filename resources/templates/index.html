@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/index.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.3/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.20.1/moment.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.1/dist/clipboard.min.js"></script>
+  <script src="/static/js/components/notify.min.js"></script>
+  <style>
+  </style>
+</head>
+
+<body>
+
+  <div class="container-fluid">
+    <nav class="navbar navbar-default">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+                aria-expanded="false">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">
+          <b>ATX</b> -
+          <strong>Server</strong>
+        </a>
+      </div>
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <p class="navbar-text"></p>
+        <ul class="nav navbar-nav">
+          <li class="active">
+            <a href="/">
+              <i class="fa fa-list-alt"></i> 设备列表
+            </a>
+          </li>
+          <li >
+            <a @click="check_async" id="yjtb">
+              <i class="fa fa-retweet"></i> 云机同步</a>
+          </li>
+          <li>
+            <a href="/installfile">
+              <i class="fa fa-retweet"></i> 安装文件</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="row">
+      <div class="col-md-12" v-if="errmsg">
+        <p class="color-red">{{errmsg}}
+          <button class="btn btn-warning btn-xs" @click="loadWatches">点击重连</button>
+        </p>
+      </div>
+    </div>
+      <!--form start -->
+    <form class="form-inline" v-on:submit.prevent>
+      <div class="form-group">
+        <div class="input-group input-group-sm">
+          <!-- <div class="input-group-addon">Search</div> -->
+          <!-- autofocus is not working, wired -->
+          <div class="input-group-addon">
+            <label from="all"><input type="checkbox" id="all"  v-on:click="qx"/>全选</label>
+          </div>
+          <div class="input-group-addon" title="在线设备">
+            <i class="fa fa-meh-o"></i>
+            <strong v-text="onlineCount"></strong>
+          </div>
+          <div class="input-group-addon" title="离线设备">
+            <i class="fa fa-snowflake-o"></i>
+            <strong v-text="count(false, null, null)"></strong>
+          </div>
+          <input type="text" v-model="searchText" placeholder="搜索" class="form-control" v-focus>
+          <div class="input-group-addon">
+            <i class="fa fa-search"></i>
+          </div>
+        </div>
+      </div>
+      <!--<div class="btn-group" role="group">-->
+        <!--<button type="button" class="btn btn-default dropdown-toggle btn_i" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">-->
+          <!--批量操作-->
+          <!--<span class="caret"></span>-->
+        <!--</button>-->
+        <!--<ul class="dropdown-menu" aria-labelledby="dropdownMenuDivider">-->
+          <!--<li>-->
+            <!--<a @click.prevent="batchUnlock" class="btn">-->
+              <!--<i class="fa fa-unlock"></i> 解锁</a>-->
+          <!--</li>-->
+          <!--<li>-->
+            <!--<a @click.prevent="batchLock" class="btn">-->
+              <!--<i class="fa fa-lock"></i> 锁屏</a>-->
+          <!--</li>-->
+          <!--<li>-->
+            <!--<a @click.prevent="batchIdentify('red')" class="btn">-->
+              <!--<i class="fa fa-location-arrow"></i> 红色</a>-->
+          <!--</li>-->
+          <!--<li>-->
+            <!--<a @click.prevent="batchIdentify('black')" class="btn">-->
+              <!--<i class="fa fa-location-arrow"></i> 黑色</a>-->
+          <!--</li>-->
+          <!--<li><a @click.prevent="uploadFile()" class="btn">-->
+             <!--<i class="fa fa-location-arrow"></i> 批量上传</a>-->
+          <!--</li>-->
+        <!--</ul>-->
+      <!--</div>-->
+    </form>
+      <!--form end -->
+    <div class="table-responsive">
+    </div>
+    <div class="row">
+        <div  v-for="(d, index) in filteredDevices" class="col-md-1 device" :key="index" :id='"phone_"+index'>
+          <div class="box_phone" @mouseenter='show("phone_"+index)' @mouseleave='hidden("phone_"+index)'>
+            <label :from='"all_"+index' class="lable_font"><input type="checkbox" :id='"all_"+index' v-on:click='check_input("all_"+index, d.udid)'>{{d.ip}}</label>
+            <a :href='"/devices/"+d.udid+"/remote"' target="_blank">
+              <img :src='"http://"+d.ip+":7912/screenshot"' :alt="d.udid" class="img_height" width="150" height="300">
+            </a>
+            <div class="btn-group-vertical posti hidden">
+              <!--<a href="#" class="btn1 btn-primary" role="button" @click="Reboot(d.ip)">重启手机</a>-->
+              <!--<a href="#" class="btn1 btn-primary" role="button">停止应用</a>-->
+              <!--<a href="#" class="btn1 btn-primary" role="button">故障修复</a>-->
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+  <script src='/static/js/vue-components.js'></script>
+  <script>
+    new Vue({
+      el: ".container-fluid",
+      data: {
+        devices: [],
+        errmsg: "",
+        searchText: "",
+        drvices_list: [] //设备列表
+      },
+      directives: {
+        focus: {
+          inserted: function (el) {
+            el.focus();
+          }
+        }
+      },
+      filters: {
+        timeSince: function (value) {
+          return moment(value).fromNow()
+        },
+        shortString: function (value, length) {
+          length = parseInt(length || "10", 10);
+          if (!value || value.length < length) {
+            return value;
+          }
+          var preLen = Math.max(1, Math.floor(length / 2 - 2));
+          var postLen = length - preLen - 2;
+          return value.substr(0, preLen) + '..' + value.substr(-postLen);
+        }
+      },
+      mounted: function () {
+        this.loadWatches()
+
+        var clipboard = new ClipboardJS(".btn-copy")
+        clipboard.on('success', function (e) {
+          $(e.trigger).notify("Copied!", {
+            className: "success",
+            position: "right",
+            autoHideDelay: 800
+          })
+        })
+      },
+      computed: {
+        filteredDevices: function () {
+          var searchText = this.searchText.trim();
+          if (!searchText.length) {
+            return this.onlineDevices;
+          }
+          var keywords = searchText.split(/\s+/).map(function (key) {
+            return key.toLowerCase()
+          })
+          return this.onlineDevices.filter(function (d) {
+            return keywords.every(function (key) {
+              // searched properties
+              return [d.propertyId, d.ip, d.serial, d.brand, d.version, (d.product || {}).name].some(function (value) {
+                return value && ("" + value).toLowerCase().includes(key)
+              })
+            })
+          })
+        },
+        onlineDevices: function () {
+          return this.devices.filter(function (d) {
+            return d.present;
+          })
+        },
+        onlineCount: function () {
+          return this.filteredDevices.filter(function (d) {
+            return d.present
+          }).length;
+        },
+      },
+      methods: {
+        releaseDevice: function (udid) {
+          $.ajax({
+            url: "/devices/" + udid + "/reserved",
+            method: "delete"
+          })
+        },
+        count: function (present, ready, using) {
+          return this.filteredDevices.filter(function (d) {
+            if (present != null && d.present != present) {
+              return false;
+            }
+            if (ready != null && d.ready != ready) {
+              return false;
+            }
+            if (using != null && d.using != using) {
+              return false;
+            }
+            return true;
+          }).length
+        },
+        loadWatches: function () {
+          // init data
+          this.loadDevices()
+          this.errmsg = "Connecting"
+
+          var ws = new WebSocket("ws://" + location.host + "/feeds")
+          var key = setInterval(function () {
+            ws.send("ping")
+          }, 5000);
+          ws.onopen = function () {
+            console.log("websocket connected")
+            this.errmsg = "";
+          }.bind(this)
+          ws.onmessage = function (evt) {
+            var jdata = JSON.parse(evt.data);
+            if (jdata.error) {
+              this.errmsg = jdata.error;
+              return
+            }
+            var dataNew = jdata.new,
+              dataOld = jdata.old;
+            if (dataNew && dataOld) {
+              $.ajax({
+                url: "/devices/" + dataNew.udid + "/info",
+                dataType: "json",
+              }).then(function (ret) {
+                this.devices = this.devices.map(function (d) {
+                  if (d.udid == dataNew.udid) {
+                    return ret;
+                  }
+                  return d;
+                })
+              }.bind(this))
+            } else {
+              this.loadDevices();
+            }
+            // console.log("websocket recv:", evt.data)
+          }.bind(this)
+          ws.onclose = function (evt) {
+            console.log("websocket closed")
+            clearInterval(key)
+            this.errmsg = "Server connection closed. " + this.errmsg;
+          }.bind(this)
+        },
+        loadDevices: function () {
+          return $.ajax({
+            url: "/list",
+          }).then(function (ret) {
+            this.devices = ret.map(function (d) {
+              d.identifying = false;
+              return d
+            })
+          }.bind(this))
+        },
+        identify: function (d) {
+          d.identifying = true;
+          $.ajax({
+            url: "/devices/" + d.udid + "/shell",
+            method: "post",
+            data: {
+              command: "input keyevent HOME && am start -W --user 0 -a com.github.uiautomator.ACTION_IDENTIFY -e theme red"
+            }
+          })
+            .always(function () {
+              d.identifying = false
+            }.bind(this))
+        },
+        release: function (d) {
+          $.ajax({
+            url: "/devices/" + d.udid + "/reserved",
+            method: "delete",
+          }).then(this.loadDevices)
+        },
+        toggleReady: function (d) {
+          d.ready = !d.ready;
+          this.updateDeviceInfo(d.udid, { ready: d.ready });
+        },
+        changeNotes: function (d, notes) {
+          d.notes = notes + "..";
+          this.updateDeviceInfo(d.udid, { notes: notes })
+        },
+        updateDeviceInfo: function (udid, info) {
+          return $.ajax({
+            url: "/devices/" + udid + "/info",
+            method: "post",
+            data: JSON.stringify(info),
+          })
+        },
+        batchIdentify: function (theme) {
+          $.ajax({
+            url: "/api/v1/batch/shell",
+            method: "post",
+            data: {
+              command: "input keyevent BACK && am start -W -a com.github.uiautomator.ACTION_IDENTIFY -e theme " + theme,
+            }
+          })
+        },
+        batchLock: function () {
+          $.ajax({
+            url: "/api/v1/batch/lock",
+            method: "post",
+          })
+        },
+        batchUnlock: function () {
+          $.ajax({
+            url: "/api/v1/batch/unlock",
+            method: "post",
+          })
+        },
+
+        Reboot: function (num) {
+          $.ajax({
+            url: "/api/v1/reboot/shell",
+            method: "post",
+            data: {
+              ip: num,
+              command: "reboot"
+            }
+          })
+        },
+        setProperty: function () {
+          $.ajax({
+            url: "/api/v1/batch/shell",
+            method: "post",
+            data: {
+              command: "am start -a android.intent.action.VIEW -d http://" + location.host + "/property",
+            }
+          })
+        },
+        qx: function(){
+          console.log($('#all').prop('checked'));
+          if($('#all').prop('checked')){
+            //如果没有选中则选中所有
+            $(".device input").prop('checked', true);
+            $('#all').prop('checked', true);
+            var qx_jd = $(".device .img_height");
+            for(var i=0; i<qx_jd.length;i++){
+              //将ip加入到列表中
+              this.drvices_list.push(qx_jd[i].alt)
+            }
+          }
+          else{
+            $(".device input").prop('checked', false);
+            $('#all').prop('checked', false);
+            this.drvices_list = []
+          }
+        },
+        show: function(c){
+          $("#"+ c + " .posti").removeClass('hidden');
+          $("#"+ c + " .posti").addClass('block');
+          $("#"+ c + " div:first").addClass('shadow');
+        },
+        hidden: function(c){
+          $("#"+ c + " .posti").removeClass('block');
+          $("#"+ c + " div:first").removeClass('shadow');
+          $("#"+ c + " .posti").addClass('hidden')
+        },
+        check_input: function(c, udid){
+          //取主机数
+          var count = $(".device input").length;
+          if ($(".device input:checked").length != count){
+            $("#all").prop("checked", false)
+          }else{
+            $("#all").prop("checked", true)
+          }
+          if ($("#"+c).prop("checked")){
+            if (this.drvices_list.indexOf(udid) === -1){
+              this.drvices_list.push(udid)
+            }
+          }else{
+            if (this.drvices_list.indexOf(udid) !== -1) {
+              this.drvices_list.splice(this.drvices_list.indexOf(udid), 1)
+            }
+          }
+        },
+        check_async: function(a){
+          console.log(this.drvices_list)
+          if(this.drvices_list.length == 0 || this.drvices_list.length == 1){
+            alert("数量错误！至少2台设备")
+          }
+          else{
+            // $('#yjtb').prop('href', '/async/' + this.drvices_list.join());
+            document.write("<form action='/async' method='post' name='form1' style='display:none'>");
+            document.write("<input type=hidden name='devices' value='"+this.drvices_list.join()+"'/>");
+            document.write("</form>");
+            document.form1.submit();
+          }
+        }
+      }
+    })
+  </script>
+</body>
+<script type="text/javascript">
+    //刷新图片
+    function refersh(){
+        $(".device img").each(function(index,element) {
+            src=element.src+"?t="+Math.random();
+            $(this).attr({src:src});
+        });
+    }
+    setInterval(refersh, 5000)
+</script>
+
+</html>

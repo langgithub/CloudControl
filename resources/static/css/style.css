@@ -1,0 +1,57 @@
+body {
+  font-family: "Segoe UI", Arial, "Microsoft Yahei", sans-serif;
+}
+
+.color-inverse {
+  color: white;
+  background-color: black;
+}
+
+.color-green {
+  color: green;
+}
+
+.color-red {
+  color: red;
+}
+
+.color-rest {
+  color: rgb(74, 201, 89);
+}
+
+.color-busy {
+  color: tomato;
+}
+
+.color-yellow {
+  color: yellowgreen;
+}
+
+.fa-fix-height {
+  line-height: 24px;
+}
+
+.fa-battery-4 {
+  color: green;
+}
+
+.fa-battery-3 {
+  color: yellowgreen;
+}
+
+.fa-battery-2 {
+  color: yellow;
+}
+
+.fa-battery-1 {
+  color: red;
+}
+
+.fa-battery-0 {
+  color: red;
+}
+
+tr.offline {
+  /* background-color: red; */
+  color: gray;
+}

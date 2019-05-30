@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="cn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.5.3/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+  <script src="/assets/libs/css/bootstrap.css"></script>
+  <title>Product</title>
+</head>
+
+<body>
+  <div id="app">
+    <h1>
+      <a href="/"><i class="fa fa-arrow-left"></i></a> 手机信息修改</h1>
+    <div>
+      <p>UDID: {{udid}}</p>
+      <dl>
+        <dt>Serial</dt>
+        <dd>{{device.serial}}</dd>
+        <dt>CPU</dt>
+        <dd>{{device.cpu && device.cpu.hardware}}</dd>
+        <dt>Memory</dt>
+        <dd>{{device.memory && device.memory.around}}</dd>
+      </dl>
+      <h4>Product</h4>
+      <p>
+        <select v-model="product_id" @change="productChange(product_id)">
+          <option v-for="v in products" v-bind:value="v.id">{{v.id}}</option>
+        </select>
+      </p>
+      <p>ID: {{product.id}}</p>
+      <p>Brand: {{product.brand}}</p>
+      <p>
+        Model: {{product.model}}
+        <a target="_blank" :href='"https://www.baidu.com/s?wd="+device.model'>百度</a>
+        <a target="_blank" :href='"https://www.google.com/search?q=" + device.model'>Google</a>
+      </p>
+      <p>Name: <input type="text" v-model.trim="product.name"></p>
+      <p>CPU: <input type="text" v-model.trim="product.cpu"></p>
+      <p>GPU: <input type="text" v-model.trim="product.gpu"></p>
+      <p>Link: <input type="text" v-model.trim="product.link"></p>
+      <p>Coverage: <input type="number" v-model.number="product.coverage">%</p>
+      <button class="btn btn-default" @click.prevent="update">更新</button>
+      <button class="btn btn-default" @click.prevent="updateAndBack">更新并返回首页</button> {{message}}
+    </div>
+  </div>
+
+  <script>
+    var udid = "[[.]]"; // device udid
+
+    new Vue({
+      el: "#app",
+      data: {
+        udid: "",
+        device: {},
+        product: {
+          id: "1242o3iryodjifasdf",
+          name: "some-product"
+        },
+        product_id: '',
+        products: [],
+        message: '',
+      },
+      mounted: function () {
+        this.udid = udid;
+        $.ajax({
+          url: "/devices/" + udid + "/info",
+        })
+          .then(function (ret) {
+            console.log(ret)
+            this.device = ret;
+            this.product = ret.product || {};
+            this.product_id = this.product.id;
+            return ret;
+          }.bind(this))
+          .then(function (ret) {
+            return $.ajax({
+              url: "/products/" + ret.brand + "/" + ret.model
+            })
+          })
+          .then(function (ret) {
+            console.log("products:", ret)
+            this.products = ret;
+          }.bind(this))
+          .then(function (ret) {
+            if (!this.product_id && this.products.length == 1) {
+              this.product = this.products[0];
+              this.product_id = this.product.id;
+            }
+            if (!this.product.cpu && this.device.cpu) {
+              this.product.cpu = this.device.cpu.hardware;
+            }
+          }.bind(this))
+
+        console.log(udid)
+      },
+      methods: {
+        updateAndBack: function () {
+          this.update().then(function (ret) {
+            window.location = "/";
+          })
+        },
+        update: function () {
+          console.log("update")
+          this.message = "updating"
+          return $.ajax({
+            url: "/devices/" + udid + "/product",
+            method: "put",
+            data: JSON.stringify(this.product),
+          })
+            .then(function (ret) {
+              console.log(ret)
+              this.message = "Update success !!"
+            }.bind(this))
+        },
+        productChange: function (product_id) {
+          console.log(product_id)
+          this.product = this.products.filter(function (p) {
+            return p.id == product_id
+          })[0]
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>

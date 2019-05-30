@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/assets/style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.3/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.20.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.1/dist/clipboard.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/notifyjs-browser@0.4.2/dist/notify.min.js"></script>
+    <style>
+        .color-green {
+            color: green;
+        }
+
+        .cursor {
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-default">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+                aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">
+                <b>ATX</b> -
+                <strong>Server</strong>
+            </a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <p class="navbar-text"></p>
+            <ul class="nav navbar-nav">
+                <li>
+                    <a href="/">
+                        <i class="fa fa-list-alt"></i> 设备列表
+                    </a>
+                </li>
+                <li>
+                    <a href="/videos">
+                        <i class="fa fa-retweet"></i> 云机同步</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container-fluid" id="app">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Present ({{presentCount}})</th>
+                    <th>IP</th>
+                    <th>Notes</th>
+                    <th>Uptime</th>
+                    <th>Devices</th>
+                    <th>ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="p in providers" :key="p.id">
+                    <td>
+                        <i class="fa fa-smile-o color-green" v-if="p.present"></i>
+                    </td>
+                    <td>{{p.ip}}</td>
+                    <td @click="updateNotes(p)">{{p.notes}} <i class="cursor fa fa-edit"></i></td>
+                    <td>
+                        <span v-show="p.present">
+                            {{p.presenceChangedAt | timeSince}}
+                        </span>
+                    </td>
+                    <td>
+                        <i class="fa fa-mobile" v-for="d in p.devices" style="padding-right: 5px"></i>
+                    </td>
+                    <td v-text="p.id"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <script>
+        new Vue({
+            el: "#app",
+            data: {
+                providers: [],
+            },
+            mounted: function () {
+                $.ajax({
+                    method: "GET",
+                    url: "/providers?json",
+                }).then(function (ret) {
+                    console.log(ret)
+                    this.providers = ret;
+                }.bind(this))
+            },
+            methods: {
+                updateNotes: function (v) {
+                    var newNotes = window.prompt("Notes", v.notes);
+                    console.log(newNotes, newNotes == null)
+                    if (newNotes === null || newNotes == v.notes) {
+                        return
+                    }
+                    v.notes = newNotes + "..";
+                    console.log("update notes", v.notes)
+                    $.ajax({
+                        method: "PUT",
+                        url: "/providers/" + v.id,
+                        data: JSON.stringify({
+                            "notes": newNotes,
+                        })
+                    }).then(function (ret) {
+                        console.log(ret)
+                        v.notes = newNotes;
+                    }.bind(this))
+                }
+            },
+            computed: {
+                presentCount: function () {
+                    return this.providers.filter(function (v) {
+                        return v.present;
+                    }).length;
+                }
+            },
+            filters: {
+                timeSince: function (value) {
+                    return moment(value).fromNow().replace(" ago", "");
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>

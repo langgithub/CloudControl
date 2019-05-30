@@ -1,0 +1,306 @@
+<html>
+<head>
+    <title>table</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/static/dropzone/dropzone.min.css">
+
+    <style>
+        /* Move down content because we have a fixed navbar that is 50px tall */
+        body {
+          padding-top: 50px;
+          padding-bottom: 20px;
+          overflow-y: scroll;
+        }
+        ul.dropdown-menu li {
+            margin-left: 20px;
+        }
+        .vuetable th.sortable:hover {
+            color: #2185d0;
+            cursor: pointer;
+        }
+        .vuetable-actions {
+            width: 11%;
+            padding: 12px 0px;
+            text-align: center;
+        }
+        .vuetable-actions > button {
+          padding: 3px 6px;
+          margin-right: 4px;
+        }
+        .vuetable-pagination {
+            margin: 0;
+        }
+        .vuetable-pagination .btn {
+            margin: 2px;
+        }
+        .vuetable-pagination-info {
+            float: left;
+            margin-top: auto;
+            margin-bottom: auto;
+        }
+        ul.pagination {
+          margin: 0px;
+        }
+        .vuetable-pagination-component {
+          float: right;
+        }
+        .vuetable-pagination-component li a {
+            cursor: pointer;
+        }
+        [v-cloak] {
+            display: none;
+        }
+        .highlight {
+            background-color: yellow;
+        }
+        .vuetable-detail-row {
+            height: 200px;
+        }
+        .detail-row {
+            margin-left: 40px;
+        }
+        .expand-transition {
+            transition: all .5s ease;
+        }
+        .expand-enter, .expand-leave {
+            height: 0;
+            opacity: 0;
+        }
+
+        /* Loading Animation: */
+        #content {
+            opacity: 1;
+            position: relative;
+            filter: alpha(opacity=100); /* IE8 and earlier */
+        }
+        #content.loading {
+          opacity:0.4;
+           transition: opacity .3s ease-in-out;
+           -moz-transition: opacity .3s ease-in-out;
+           -webkit-transition: opacity .3s ease-in-out;
+        }
+        #content.loading:after {
+          position: absolute;
+          content: '';
+          top: 40%;
+          left: 50%;
+          margin: -30px 0 0 -30px;
+          border-radius: 100%;
+          -webkit-animation-fill-mode: both;
+                  animation-fill-mode: both;
+          border: 4px solid #000;
+          height: 60px;
+          width: 60px;
+          background: transparent !important;
+          display: inline-block;
+          -webkit-animation: pulse 1s 0s ease-in-out infinite;
+                  animation: pulse 1s 0s ease-in-out infinite;
+        }
+        @keyframes pulse {
+          0% {
+            -webkit-transform: scale(0.6);
+                    transform: scale(0.6); }
+          50% {
+            -webkit-transform: scale(1);
+                    transform: scale(1);
+                 border-width: 12px; }
+          100% {
+            -webkit-transform: scale(0.6);
+                    transform: scale(0.6); }
+        }
+        a.item{
+            color: #333;
+            background-color: #fff;
+            display: inline-block;
+            padding: 6px 12px;
+            margin-bottom: 0;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.42857143;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            -ms-touch-action: manipulation;
+            touch-action: manipulation;
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            background-image: none;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app" class="ui vertical stripe segment">
+
+
+        <div class="ui container">
+              <form action="/upload/sdcard/tmp/" method="post" enctype="multipart/form-data" class="dropzone" ref="upload">
+                <div class="fallback">
+                    <input name="file" type="file" multiple />
+                </div>
+              </form>
+              <div class="form-group">
+                <label>上传路径指定在/data/local/tmp/*目录下  默认/data/local/tmp/</label>
+                <input type="text" placeholder="上传路径" class="form-control" value="/data/local/tmp/">
+    <!--<p class="help-block">上传路径为空，会根据上传的文件名自动分析要上传的路径</p>-->
+              </div>
+              <button class="btn btn-default btn-sm" id="upload_file">上传</button>
+            <div id="content" class="ui basic segment">
+                <h3 class="ui header">List of installed file</h3>
+                <vuetable v-ref:vuetable
+                :api-url= "file_url"
+                pagination-path=""
+                :fields="columns"
+                :sort-order="sortOrder"
+                :multi-sort="multiSort"
+                table-class="table table-bordered table-striped table-hover"
+                ascending-icon="glyphicon glyphicon-chevron-up"
+                descending-icon="glyphicon glyphicon-chevron-down"
+                pagination-class=""
+                pagination-info-class=""
+                pagination-component-class=""
+                :pagination-component="paginationComponent"
+                :item-actions="itemActions"
+                :append-params="moreParams"
+                :per-page="perPage"
+                wrapper-class="#content"
+                table-wrapper=".vuetable-wrapper"
+                loading-class="loading"
+                detail-row-component="my-detail-row"
+                detail-row-id="id"
+                detail-row-transition="expand"
+                row-class-callback="rowClassCB"
+            ></vuetable>
+            </div>
+        </div>
+
+    </div>
+
+
+</body>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/vue/1.0.28/vue.js"></script>
+<script src="/static/js/vue-resource.common.js"></script>
+<script type="text/javascript" src="http://cdn.jsdelivr.net/vue.table/1.5.3/vue-table.min.js"></script>
+<script type="text/javascript">
+	    new Vue({
+	        el: '#app',
+	        data: {
+	            columns: [
+	                'group',
+	                'filename',
+	                'filesize',
+	                'upload_time',
+	                'who',
+	                '__actions'
+				],
+                paginationComponent: 'vuetable-pagination',
+                file_url: "http://" + window.location.host +"/files",
+	            itemActions: [
+	                { name: 'view-item', label: '', icon: 'zoom icon', class: 'glyphicon glyphicon-zoom-in' },
+	                { name: 'edit-item', label: '', icon: 'edit icon', class: 'glyphicon glyphicon-pencil'},
+	                { name: 'delete-item', label: '', icon: 'delete icon', class: 'glyphicon glyphicon-remove' }
+	            ]
+	        },
+            watch: {
+
+                'perPage': function(val, oldVal) {
+                    this.$broadcast('vuetable:refresh')
+                },
+                'paginationComponent': function(val, oldVal) {
+                    this.$broadcast('vuetable:load-success', this.$refs.vuetable.tablePagination)
+                    this.paginationConfig(this.paginationComponent)
+                }
+            },
+	        methods: {
+	            viewProfile: function(id) {
+	                console.log('view profile with id:', id)
+	            }
+	        },
+	        events: {
+	            'vuetable:action': function(action, data) {
+	                console.log('vuetable:action', action, data)
+	                if (action == 'view-item') {
+                        this.viewProfile(data.id)
+                    }else if(action == 'delete-item'){
+                        /*$.ajax({
+                            url: "/file/delete/"+data["group"]+"/"+data["filename"],
+                            success: function (data) {
+                                console.log("delete ok!!!")
+                                window.location.reload()
+                            }
+                        })*/
+                        window.location.href="/file/delete/"+data["group"]+"/"+data["filename"]
+
+                    }
+	            },
+	            'vuetable:load-error': function(response) {
+	                console.log('Load Error: ', response)
+	            }
+	        }
+        })
+</script>
+<script src='/static/dropzone/dropzone.min.js'></script>
+<script type="text/javascript">
+   Dropzone.autoDiscover = false;
+   var my_dropzone=new Dropzone(".dropzone",{
+       url:"http://"+window.location.host+"/upload_group/data_local_tmp",
+       paramName: "file",
+       maxFilesize: 1000.0, // 上传的文件大小
+       maxFiles:2,//一次性上传的文件数量上限
+       acceptedFiles: "",//上传文件类型
+       addRemoveLinks : true,//添加移除文件
+       autoProcessQueue: false,//不自动上传
+       dictCancelUploadConfirmation:'你确定要取消上传吗？',
+       dictMaxFilesExceeded: "只能上传2个文件",
+       dictFileTooBig:"文件过大({{filesize}}MB). 上传文件最大支持: 1000MB.请联系管理员吧",
+       dictDefaultMessage :
+       '<span class="bigger-150 bolder"><i class="icon-caret-right red"></i> 拖动文件至该处</span> \
+       <span class="smaller-80 grey"></span> <br /> \
+       <i class="upload-icon icon-cloud-upload blue icon-3x"></i>',
+       dictResponseError: '文件上传失败!',
+       dictInvalidFileType: "你不能上传该类型文件,文件类型只能是*.xls/*.xlsx。",
+       dictCancelUpload: "取消上传",
+       dictCancelUploadConfirmation: "你确定要取消上传吗?",
+       dictRemoveFile: "移除文件",
+       uploadMultiple:false,
+       headers:{'Access-Control-Allow-Origin': "0"},
+       init: function() {
+           //上传文件时触发的事件
+           this.on("addedfile", function(file) {
+               //浏览器控制台输出js
+               console.log("File " + file.name + " 准备 uploaded");
+            });
+           //上传文件成功时触发的事件
+           this.on("success", function(file,data) {
+               console.log("File " + file.name + " 已经 uploaded");
+               {#window.location.href="/installfile"#}
+               {#var result=JSON.stringify(data)#}
+               if(data["exception"]=="true"){
+                   alert(data["exception_data"])
+               }
+
+           });
+           //移除文件触发的事件
+           this.on("removedfile", function(file) {
+               console.log("File " + file.name + "removed");
+           });
+       }
+     });
+   $('#upload_file').on('click',function(e){
+        e.preventDefault();
+        my_dropzone.processQueue();
+        console.log(my_dropzone)
+
+
+   });
+</script>
+</html>

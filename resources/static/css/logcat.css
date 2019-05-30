@@ -1,0 +1,71 @@
+.logcat {
+  font-family: "Courier New", Courier, monospace;
+  border-collapse: separate;
+  border-spacing: 4px 0px;
+  background-color: black;
+  color: white;
+  width: 100%;
+  border-radius: 5px;
+  font-size: 10px;
+}
+
+.logcat-lineno {
+  vertical-align: text-top;
+}
+
+.logcat-tag {
+  color: red;
+  text-align: right;
+  vertical-align: text-top;
+  width: 10em;
+  font-weight: 500;
+  font-family: Consolas;
+}
+
+.logcat-level {
+  text-align: center;
+  vertical-align: text-top;
+  color: white;
+  background-color: green;
+  width: 1.5em;
+}
+
+.logcat-content {
+  word-break: normal;
+  white-space: pre-line;
+}
+
+.nav-tabs>li.follow-log {
+  display: block;
+  border-color: green;
+  border-width: 1.5mm;
+  border-style: solid;
+  border-radius: 50%;
+  width: 6mm;
+  height: 6mm;
+  opacity: 0.7;
+  background: white;
+  position: relative;
+  float: right;
+  top: 60px;
+  right: 50px;
+  cursor: pointer;
+  /* pointer-events: none; */
+  /* left: 100mm; */
+}
+
+.follow-log .hover-content {
+  display: none;
+  background: gray;
+  color: white;
+  width: 12em;
+  margin-left: -10.5em;
+  margin-top: -0.5em;
+  padding: 2px;
+  border-radius: 2px;
+  text-align: center;
+}
+
+.follow-log:hover .hover-content {
+  display: block;
+}

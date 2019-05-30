@@ -1,0 +1,10 @@
+uiautomator2
+requests
+websockets
+cryptography
+motor
+aiohttp_session
+jinja2
+aiohttp
+aiohttp_jinja2
+motor

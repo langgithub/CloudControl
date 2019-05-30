@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Access-Control-Allow-Origin" content="*">
+  <meta name="viewport"   content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>DRC [[.]]</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap.select/1.12.2/css/bootstrap-select.min.css">
+  <link rel="stylesheet" href="/static/css/remote.css">
+  <link rel="stylesheet" href="/static/css/bootstrap-tabs.css">
+  <link rel="stylesheet" href="/static/css/logcat.css">
+  <link rel="stylesheet" href="/static/dropzone/dropzone.min.css">
+  <link rel="stylesheet" href="/static/css/jquery.json-viewer.css">
+  <link rel="stylesheet" href="/static/css/toastr.min.css">
+
+  <!-- jstree -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jstree@3.3.4/dist/themes/default/style.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@2.9.2/dist/xterm.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@2.9.2/dist/addons/fullscreen/fullscreen.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+  <script src='/static/js/toastr.min.js'></script>
+
+  <style>
+    /* body {
+      background: #EDECEC;
+      padding: 50px
+    } */
+
+    {#.dropzone {#}
+    {#  display: block;#}
+    {#  /*text-align: center;*/#}
+    {#  border: 2px dashed #666;#}
+    {#  border-radius: 5px;#}
+    {#  cursor: pointer;#}
+    {#  height: 74px;#}
+    {#  line-height: 70px;#}
+    {#  font-size: 20px;#}
+    {#  position: relative;#}
+    {#}#}
+
+    {#.dropzone.dz-drag-hover {#}
+    {#  border-style: solid;#}
+    {#  border-color: #4285F4;#}
+    {#}#}
+
+    #xterm {
+      height: 100px;
+      background-color: black;
+      padding-left: 5px;
+      margin: -10px 5px 5px 5px;
+    }
+
+    .tab-content{
+        padding: 0;
+        overflow: inherit;
+    }
+    .panel-body{
+        padding: 0;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <nav class="navbar navbar-default" style="margin-bottom: 0px">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+          aria-expanded="false">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">
+          <b>ATX</b> -
+          <strong>Server</strong>
+        </a>
+      </div>
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <p class="navbar-text">{{Udid}}
+          <a target="_blank" v-bind:href='"http://"+device.ip+":"+device.port+"/term"'>
+            终端
+          </a>
+        </p>
+        <form class="navbar-form navbar-left">
+          <button class="btn btn-sm btn-default" @click.prevent="toggleScreen">
+            <i v-if="screenWS" class="fa fa-eye"></i>
+            <i v-else class="fa fa-eye-slash"></i>
+          </button>
+        </form>
+        <p class="navbar-text">
+          <a href="javascript:window.close()">标签页关闭</a>，设备自动释放</p>
+      </div>
+    </nav>
+    <div id="upper">
+      <div id="left">
+        <div class="text-center" style="background-color:white">
+          <!-- notification here -->
+        </div>
+        <section id="screen">
+          <canvas id="fgCanvas" class="canvas-fg" v-bind:style="canvasStyle"></canvas>
+          <canvas id="bgCanvas" class="canvas-bg" v-bind:style="canvasStyle"></canvas>
+          <span class="finger finger-0" style="transform: translate3d(200px, 100px, 0px)"></span>
+          <span class="finger finger-1" style="transform: translate3d(200px, 100px, 0px)"></span>
+          <img style="z-index: 10" v-if="loading" src="/static/loading.svg">
+        </section>
+        <section id="footer">
+          <button class="btn btn_bt" @click="keyevent('power')">
+            <i class="fa fa-power-off color-red"></i> Power</button>
+          <button class="btn btn_bt" @click="keyevent('menu')">
+            <i class="glyphicon glyphicon-menu-hamburger"></i> Menu</button>
+          <button class="btn btn_bt" @click="keyevent('home')">
+            <i class="fa fa-home"></i> Home</button>
+          <button class="btn btn_bt" @click="keyevent('back')">
+            <i class="fa fa-chevron-left"></i> Back</button>
+        </section>
+      </div>
+      <div id="vertical-gap1" class="handle vertical-gap"></div>
+      <div id="right">
+
+        <div class="row box">
+          <div class="col-md-12 box">
+            <!-- Nav tabs -->
+            <div class="card">
+              <!-- tab标题 start-->
+              <ul class="nav nav-tabs" role="tablist">
+
+                <li role="presentation">
+                    <a href="#home" aria-controls="home" role="tab" data-toggle="tab">
+                        <i class="fa fa-home mgn"></i>Home
+                    </a>
+                </li>
+                <li role="presentation">
+                    <a href="#terminal" aria-controls="terminal" role="tab" data-toggle="tab">
+                        <i class="fa fa-terminal mgn"></i>terminal
+                    </a>
+                </li>
+                <li role="presentation">
+                      <a href="#explorer" aria-controls="explorer" role="tab" data-toggle="tab">
+                         <i class="fa fa-upload mgn"></i>explorer
+                      </a>
+                </li>
+                <li role="presentation">
+                    <a href="#inspector" aria-controls="inspector" role="tab" data-toggle="tab">
+                        <i class="fa fa-android mgn"></i>inspector
+                    </a>
+                </li>
+
+              </ul>
+              <!-- tab标题 end-->
+
+              <!-- Tab panes start-->
+              <div class="tab-content" ref="tab_content" @mousewheel="tabScroll">
+
+                <tab-item v-on:additem="addTabItem" :active="navtabs.active" tabid="home" name="home">
+{#                  <button @click="fixRotation" class="btn btn-default btn-sm">#}
+{#                    <span class="glyphicon glyphicon-repeat"></span> 修复旋转</button>#}
+{#                  <button @click="fixMinicap" class="btn btn-default btn-sm" disabled=true>#}
+{#                    <span class="fa fa-legal"></span> 修复minicap</button>#}
+{#                  <div style="padding-top: 10px" v-text="fixConsole"></div>#}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <i class="fa fa-android"></i> 设备信息</div>
+                                <div class="panel-body">
+                                    <div class="col-md-3">品牌: </div><div class="col-md-9">{{deviceInfo.brand}}</div>
+                                    <div class="col-md-3">型号: </div><div class="col-md-9">{{deviceInfo.model}}</div>
+                                    <div class="col-md-3">系统版本: </div><div class="col-md-9">{{deviceInfo.version}}</div>
+                                    <div class="col-md-3">sdk版本: </div><div class="col-md-9">{{deviceInfo.sdk}}</div>
+                                    <div class="col-md-3">分辨率: </div><div class="col-md-9">{{deviceInfo.display.height}}x{{deviceInfo.display.width}}</div>
+                                    <div class="col-md-3">内存: </div><div class="col-md-9">{{deviceInfo.memory.around}}</div>
+                                    <div class="col-md-3">CPU: </div><div class="col-md-9">{{deviceInfo.cpu.cores}}核</div>
+                                    <div class="col-md-3">IP: </div><div class="col-md-9">{{deviceInfo.ip}}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <i class="fa fa-keyboard-o"></i> 输入</div>
+                                <div class="panel-body">
+                                    <div>
+                                        <textarea ref="whatsinput" :disabled="whatsinput.disabled"
+                  :placeholder="whatsinput.disabled ? 'Input disabled' : 'Input something ...'" class="form-control text"
+                  v-model="whatsinput.text" @input="sendInputText" @keydown.tab.exact.prevent="sendInputKey('tab')"
+                  @keydown.enter.exact.prevent="sendInputKey('enter')"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <i class="fab fa-app-store-ios"></i>
+                                    当前应用
+                                </div>
+                              <div class="panel-body text-margin">
+                                <div class="form-group">
+                                  <input v-model="topApp.packageName" class="form-control form-control-sm" placeholder="PackageName">
+                                </div>
+                                <div class="form-group">
+                                  <input v-model="topApp.activity" class="form-control form-control-sm" placeholder="Activity">
+                                </div>
+                                <div class="btn-group">
+                                  <button type="button" class="btn btn-sm btn-outline-primary" @click="refreshTopApp"><i
+                                      class="fas fa-sync"></i>
+                                    刷新</button>
+                                  <!--<button type="button" :disabled="!topApp.packageName" class="btn btn-sm btn-outline-primary"-->
+                                    <!--@click="addTopAppToShortcut"><i class="fas fa-blind"></i> 添加到快捷入口</button>-->
+                                </div>
+                              </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <i class="fa fa-cog"></i> 快捷入口</div>
+                                <div class="panel-body text">
+                                    <button class="btn btn-sm btn-outline-primary"
+                                        @click="runShell('am start -a android.settings.SETTINGS')">
+                                        <i class="fa fa-cog"></i>
+                                        Settings
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary"
+                                      @click="runShell('am start -a com.android.settings.APPLICATION_DEVELOPMENT_SETTINGS')">
+                                      <i class="fa fa-wrench"></i>
+                                      开发者
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary"
+                                      @click="runShell('am start -a android.settings.WIFI_SETTINGS')">
+                                      <i class="fa fa-wifi"></i>
+                                      WIFI
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary"
+                                      @click="runShell('monkey -p com.tencent.mm -c android.intent.category.LAUNCHER 1')">
+                                      <i class="fa fa-weixin"></i>
+                                      微信
+                                    </button>
+                                    <hr>
+                                    <button id ="start" class="btn btn-sm btn-outline-primary"
+                                      @click="atxAgentManager('start')">
+                                      <i class="fa fa-recycle"></i>
+                                      atx-agent开启
+                                    </button>
+                                    <button id ="stop" class="btn btn-sm btn-outline-primary"
+                                      @click="atxAgentManager('stop')">
+                                      <i class="fa fa-close"></i>
+                                      atx-agent关闭
+                                    </button>
+                                    <button id ="restart" class="btn btn-sm btn-outline-primary"
+                                      @click="atxAgentManager('restart')">
+                                      <i class="fa fa-refresh"></i>
+                                      atx-agent重启
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </tab-item>
+
+                <tab-item v-on:additem="addTabItem" :active="navtabs.active" tabid="explorer" name="文件(TODO)">
+                  <!-- <label>从URL安装（</label>
+                  <div style="max-width: 500px" class="input-group">
+                    <input type="text" placeholder="https://..." class="form-control">
+                    <span class="input-group-btn">
+                      <button class="btn btn-default" type="button">Go</button>
+                    </span>
+                  </div> -->
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-android"></i> 上传文件</div>
+                    <div class="panel-body">
+                          <form action="/upload" method="post" enctype="multipart/form-data" class="dropzone" ref="upload">
+                                <input name="path" :value="path" type="hidden"/>
+                                <input name="power" :value="power" type="hidden"/>
+                            <div class="fallback">
+                                <input name="file" type="file" multiple />
+                            </div>
+                          </form>
+                          <div class="form-group">
+                            <label>上传到 </label>
+                            <input type="text" placeholder="上传路径" class="form-control" v-model="path">
+                            <p class="help-block">上传路径为空，默认存放路径为/data/local/tmp/路径下</p>
+                            <p> 注意： <span style="color:red">路径格式为 / 开头, /结尾 并且路径正确否则上传不成功</span></p>
+                          </div>
+                          <div class="form-group">
+                              <label>权限设置</label>
+                              <input type="text" placeholder="权限设置" class="form-control" v-model="power">
+                              <p class="help-block">默认755权限</p>
+                          </div>
+                          <div class="form-group">
+                              <button id="upload_file" class="btn btn-default" style="float:right; width:120px;height:40px">上传</button>
+                          </div>
+                     </div>
+                  </div>
+
+                </tab-item>
+
+                <tab-item v-on:additem="addTabItem" :active="navtabs.active" tabid="terminal" name="终端(TODO)">
+                    <!--<div class="panel panel-default">-->
+                        <!--<div class="panel-heading">-->
+                            <!--<i class="glyphicon glyphicon-text-background"></i> terminal-->
+                        <!--</div>-->
+                        <!--<div class="panel-body">-->
+                              <div id="xterm" style="min-height: 450px"></div>
+                              <!--<p class="description"></p>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                </tab-item>
+
+                <tab-item v-on:additem="addTabItem" :active="navtabs.active" tabid="inspector" name="inspector">
+                  <!-- start-->
+                    <div class="row" style="height: 802px;">
+                        <div class="col-md-4">
+                            <div class="panel panel-default">
+                                  <div class="panel-heading">
+                                    <i class="fa fa-empire" aria-hidden="true"></i> device
+                                    <span class="pull-right">
+                                      <button :disabled="loading" class="button button-primary button-tiny button-rounded" v-on:click="screenDumpUI()">
+                                        <i class="fa fa-refresh"></i> Reload
+                                      </button>
+                                    </span>
+                                  </div>
+                                  <div class="panel-body" style="height: 720px" id="screen_tree" >
+{#                                       <section id="screen_tree" class="canvasStyleTree">#}
+{#                                          #}
+                                          <canvas id="fgCanvas_tree" v-bind:style="canvasStyleTree" height="500" width="300" style="position:absolute;z-index: 10"></canvas>
+                                          <canvas id="bgCanvas_tree" v-bind:style="canvasStyleTree" height="500" width="300" style="position:absolute;z-index: 9"></canvas>
+                                          <span class="finger finger-0" style="transform: translate3d(200px, 100px, 0px)"></span>
+                                          <img style="z-index: 10" v-if="loading" src="/static/loading.svg" height="800" width="400">
+{#                                        </section>#}
+                                  </div>
+                            </div>
+
+                        </div>
+                        <div class="col-md-4">
+                            <!-- tree sart-->
+                            <div class="panel panel-default">
+                                  <div class="panel-heading">
+                                    <i class="fa fa-empire" aria-hidden="true"></i> Tree
+                                  </div>
+                                  <div class="panel-body oflw">
+                                       <div class="input-group input-group-sm">
+                                          <div class="input-group-btn">
+                                            <button class="btn btn-default">
+                                              <i class="glyphicon glyphicon-plus"></i>
+                                            </button>
+                                          </div>
+                                          <input id="jstree-search" type="text" class="form-control" placeholder="Search for...">
+                                          <span class="input-group-btn">
+                                            <button class="btn btn-default" type="button">
+                                              <i class="glyphicon glyphicon-search"></i>
+                                            </button>
+                                          </span>
+                                        </div>
+                                        <div class="box" style="height:700px;width:412px;overflow: hidden;overflow-x:auto;overflow-y:auto">
+                                          <div id="jstree-hierarchy" ></div>
+                                        </div>
+                                  </div>
+                            </div>
+
+                        </div>
+                         <div class="col-md-4">
+                                 <div class="panel panel-default">
+                                      <div class="panel-heading">
+                                        <i class="fa fa-empire" aria-hidden="true"></i> Selected Element
+                                      </div>
+                                     <div class="panel-body">
+                                        <table class="table table-bordered table-weditor table-condensed">
+                                            <thead>
+                                              <tr>
+                                                <th style="width: 8em">Prop</th>
+                                                <th>Value</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+
+                                              <template v-if="['iOS', 'Neco'].includes(platform)">
+                                                <tr>
+                                                  <td>name</td>
+                                                  <td contenteditable v-text="elem.name"></td>
+                                                </tr>
+                                              </template>
+                                              <template v-if="['Neco'].includes(platform)">
+                                                <tr>
+                                                  <td>tag</td>
+                                                  <td contenteditable v-text="elem.tag"></td>
+                                                </tr>
+                                                <tr v-if="elem.anchor">
+                                                  <td>anchor</td>
+                                {#                  <td contenteditable>{{!elem.anchor.x}}, {{!elem.anchor.y}}</td>#}
+                                                </tr>
+                                              </template>
+
+                                              <tr>
+                                                <td>className</td>
+                                                <td contenteditable v-text="elem.className || elem.type"></td>
+                                              </tr>
+                                              <template v-if="['Android', 'Neco'].includes(platform)">
+                                                <tr>
+                                                  <td>description</td>
+                                                  <td contenteditable v-text="elem.description"></td>
+                                                </tr>
+                                                <tr>
+                                                  <td>text</td>
+                                                  <td contenteditable v-text="elem.text"></td>
+                                                </tr>
+                                              </template>
+                                              <template v-if="platform == 'Neco'">
+                                                <tr>
+                                                  <td>touchable</td>
+                                                  <td contenteditable v-text="elem.touchable"></td>
+                                                </tr>
+                                              </template>
+                                              <template v-if="platform == 'Android'">
+                                                <tr>
+                                                  <td>resourceId</td>
+                                                  <td contenteditable v-text="elem.resourceId"></td>
+                                                </tr>
+                                                <tr>
+                                                  <td>clickable</td>
+                                                  <td contenteditable v-text="elem.clickable"></td>
+                                                </tr>
+                                                <tr>
+                                                  <td>packageName</td>
+                                                  <td contenteditable v-text="elem.package"></td>
+                                                </tr>
+                                              </template>
+                                              <template v-if="platform == 'iOS'">
+                                                <tr>
+                                                  <td>label</td>
+                                                  <td contenteditable v-text="elem.label"></td>
+                                                </tr>
+                                                <tr>
+                                                  <td>x, y</td>
+                                {#                  <td>{{!elem.x}}, {{!elem.y}}</td>#}
+                                                </tr>
+                                                </tr>
+                                                <tr>
+                                                  <td>width</td>
+                                                  <td v-text="elem.width"></td>
+                                                </tr>
+                                                <tr>
+                                                  <td>height</td>
+                                                  <td v-text="elem.height"></td>
+                                                </tr>
+                                              </template>
+                                              <tr>
+                                                <td>enabled</td>
+                                                <td v-text="elem.enabled"></td>
+                                              </tr>
+                                              <tr>
+                                                <td>visible</td>
+                                                <td v-text="elem.visible"></td>
+                                              </tr>
+                                              <tr>
+                                                <td>xpath(beta)</td>
+                                                <td contenteditable v-text="elemXpath"></td>
+                                              </tr>
+                                              <tr>
+                                                <td>position
+                                                  <i @click="showCursorPercent = !showCursorPercent" :class="{'inactive': showCursorPercent}" class="fa fa-percent cursor-pointer"
+                                                    aria-hidden="true"></i>
+                                                </td>
+{#                                                <td>#}
+{#                                                  <span title="双击复制" @dblclick="copyToClipboard('('+cursorValue.x+', '+cursorValue.y+')')">#}
+                                {#                    ({{!cursorValue.x}}, {{!cursorValue.y}})#}
+{#                                                  </span>#}
+{#                                                  <a href="#" @click="doPositionTap(cursorValue.x, cursorValue.y)">点击</a>#}
+                                                    <td >
+                                                        <span v-text="cursorValue.x"></span>
+                                                        <span v-text="cursorValue.y"></span>
+
+                                                    </td>
+{#                                                </td>#}
+                                              </tr>
+
+                                            </tbody>
+                                            <tfoot></tfoot>
+                                        </table>
+                                        <h5>Code</h5>
+{#                                        <input type="text" v-model="generatedCode" class="form-control input-sm">#}
+
+                                     </div>
+                                </div>
+                         </div>
+                    </div>
+                  <!-- end-->
+                </tab-item>
+
+              </div>
+              <!-- Tab panes end-->
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- alert and dialogs -->
+    <div class="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title">
+              <span class="color-red">
+                <i class="fa fa-warning"></i> Error</span>
+            </h4>
+          </div>
+          <div class="modal-body">
+            <pre v-html="error"></pre>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/bootstrap.select/1.12.2/js/bootstrap-select.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jstree@3.3.4/dist/jstree.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@1.3.3/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@1.5.12/dist/clipboard.min.js"></script>
+<script src="/static/js/notify.js"></script>
+<script src="/static/js/jquery-tiny-pubsub.js"></script>
+<script src='/static/dropzone/dropzone.min.js'></script>
+<script src="/static/js/common.js"></script>
+<script type="text/x-template" id="tab-item-component">
+  <div role="tabpanel" class="tab-pane" :class='{active: active == id}' :id="id">
+    <slot></slot>
+  </div>
+</script>
+<script>
+  var deviceIp = "{{IP}}";
+  var devicePort = "{{Port}}";
+  var deviceUdid = "{{ Udid }}";
+  var device={{ device | safe }}
+
+  console.log("Infos:", deviceIp, devicePort, deviceUdid);
+  !function(){
+      var height = document.documentElement.clientHeight;
+      $("#xterm").css("height", height - 105 + "px");
+  }();
+  Vue.component('tab-item', {
+    template: '#tab-item-component',
+    props: ["name", "active", "tabid"],
+    computed: {
+      id: function () {
+        return this.tabid || this.name.toLowerCase().replace(" ", "-")
+      }
+    },
+    mounted: function () {
+      var item = {
+        name: this.name,
+        id: this.id,
+      }
+      this.$emit("additem", item);
+    }
+  });
+</script>
+<!-- need set var "deviceIp" before -->
+{#<script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>#}
+<script src="/static/js/jquery.json-viewer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm@2.9.2/dist/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm@2.9.2/dist/addons/fit/fit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm@2.9.2/dist/addons/fullscreen/fullscreen.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cos-jquery-resize@1.1.0/jquery.ba-resize.min.js"></script>
+<script>
+    var term;
+    var websocket_term = new WebSocket("ws://" + deviceIp + ":7912/term");
+    websocket_term.binaryType = "arraybuffer";
+
+    function ab2str(buf) {
+      return String.fromCharCode.apply(null, new Uint8Array(buf));
+    }
+    websocket_term.onopen = function(evt) {
+      term = new Terminal({
+        screenKeys: true,
+        useStyle: true,
+        cursorBlink: true,
+      });
+
+      term.on('data', function(data) {
+        websocket_term.send(new TextEncoder().encode("\x00" + data));
+      });
+      term.on('resize', function(evt) {
+        websocket_term.send(new TextEncoder().encode("\x01" + JSON.stringify({
+          cols: evt.cols,
+          rows: evt.rows
+        })))
+      });
+      term.on('title', function(title) {
+        document.title = title;
+      });
+
+      term.open(document.getElementById('xterm'));
+      term.fit();
+      $("#xterm").resize(function() {
+        term.fit()
+      })
+
+      websocket_term.onmessage = function(evt) {
+        if (evt.data instanceof ArrayBuffer) {
+          term.write(ab2str(evt.data));
+        } else {
+          alert(evt.data)
+        }
+      }
+      websocket_term.onclose = function(evt) {
+        term.write("Session terminated");
+        term.destroy();
+      }
+      websocket_term.onerror = function(evt) {
+        if (typeof console.log == "function") {
+          console.log(evt)
+        }
+      }
+    }
+</script>
+<script src="/static/js/remote.js"></script>
+<script type="text/javascript">
+   Dropzone.autoDiscover = false;
+   var my_dropzone=new Dropzone(".dropzone",{
+       url:"http://"+window.location.host+"/upload",
+       paramName: "file",
+       maxFilesize: 1000.0, // 上传的文件大小
+       maxFiles:2,//一次性上传的文件数量上限
+       acceptedFiles: "",//上传文件类型
+       addRemoveLinks : true,//添加移除文件
+       autoProcessQueue: false,//不自动上传
+       dictCancelUploadConfirmation:'你确定要取消上传吗？',
+       dictMaxFilesExceeded: "只能上传2个文件",
+       dictFileTooBig:"文件过大({{filesize}}MB). 上传文件最大支持: 1000MB.请联系管理员吧",
+       dictDefaultMessage :
+       '<span class="bigger-150 bolder"><i class="icon-caret-right red"></i> 拖动文件至该处</span> \
+       <span class="smaller-80 grey"></span> <br /> \
+       <i class="upload-icon icon-cloud-upload blue icon-3x"></i>',
+       dictResponseError: '文件上传失败!',
+       dictInvalidFileType: "你不能上传该类型文件,文件类型只能是*.xls/*.xlsx。",
+       dictCancelUpload: "取消上传",
+       dictCancelUploadConfirmation: "你确定要取消上传吗?",
+       dictRemoveFile: "移除文件",
+       uploadMultiple:false,
+       headers:{'Access-Control-Allow-Origin': deviceUdid},
+       init: function() {
+           //上传文件时触发的事件
+           this.on("addedfile", function(file) {
+               //浏览器控制台输出js
+               console.log("File " + file.name + " 准备 uploaded");
+            });
+           //上传文件成功时触发的事件
+           this.on("success", function(file) {
+               console.log("File " + file.name + " 已经 uploaded");
+           });
+           //移除文件触发的事件
+           this.on("removedfile", function(file) {
+               console.log("File " + file.name + "removed");
+           });
+       }
+     });
+   $('#upload_file').on('click',function(e){
+        e.preventDefault();
+        // {#my_dropzone.options.url="http://"+deviceIp+":7921/upload/sdcard/tmp/upload_file/"#}
+        my_dropzone.processQueue();
+        console.log(my_dropzone)
+
+   });
+   $(function(){
+      toastr.options= {
+        "closeButton":false,//显示关闭按钮
+        "debug":false,//启用debug
+        "positionClass":"toast-top-right",//弹出的位置
+        "showDuration":"300",//显示的时间
+        "hideDuration":"1000",//消失的时间
+        "timeOut":"5000",//停留的时间
+        "extendedTimeOut":"1000",//控制时间
+        "showEasing":"swing",//显示时的动画缓冲方式
+        "hideEasing":"linear",//消失时的动画缓冲方式
+        "showMethod":"fadeIn",//显示时的动画方式
+        "hideMethod":"fadeOut"//消失时的动画方式
+      };
+    });
+</script>
+</html>

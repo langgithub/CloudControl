@@ -1,0 +1,53 @@
+descption:  default config
+#数据库基本信息
+db_configs:
+  type: mongo
+  host: 172.17.0.170
+  port: 27017
+  user: admin
+  passwd: Mongo2018914
+  db_name: atxserver
+# redis配置
+redis_configs:
+  redis_url: redis://:BIgsfintech27581@172.17.0.168:6379/15
+#db_configs:
+#  type: mongo
+#  host: 127.0.0.1
+#  port: 27017
+#  #    user : admin
+#  #    user1 : admin
+#  #    passwd : Mongo2018914
+#  db_name: online_data
+#  db_name1: spider_data
+#对外服务基本信息
+  db_name1: spider_data
+
+#kafka消息队列
+kafka_configs:
+  topic: lang
+  #kafka服务器，地址一般集群地址，此处单个IP地址也可用
+  bootstrap_servers: "172.17.0.212:9090"
+  #消费组ID唯一，处在同一消费组中的消费者消费的数据不会重复
+  group_id: group_lang
+
+rest_server_configs:
+  host: 0.0.0.0
+  port: 55555
+  debug: True
+#influxdb
+influxdb_configs:
+  host: 172.17.0.212
+#  host: 127.0.0.1
+  port: 8086
+  user: admin
+  passwd: adminATinfluxdb2016
+  db_name: op_spider
+
+# spider 配置信息
+SPIDER:
+  MIDDLEWARE: "common.middleware.RequestsMiddleware"
+
+
+# 服务器端口
+server:
+  port: 8001

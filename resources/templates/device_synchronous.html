@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>DRC [[.]]</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/bootstrap.select/1.12.2/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href='/static/css/remote.css'>
+    <link rel="stylesheet" href="/static/css/bootstrap-tabs.css">
+    <link rel="stylesheet" href="/static/css/logcat.css">
+    <link rel="stylesheet" href="/static/dropzone/dropzone.min.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jstree@3.3.4/dist/themes/default/style.min.css">
+    <style>
+        ul#shot_phone li{
+            list-style: none;
+            margin: 6px;
+            border: 1px solid #e7e7e7 ;
+        }
+    </style>
+</head>
+
+<body>
+<div id="app">
+    <nav class="navbar navbar-default" style="margin-bottom: 0px">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+                    aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">
+                <b>ATX</b> -
+                <strong>Server</strong>
+            </a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <p class="navbar-text">{{deviceInfo.udid}} {{device.ip}}
+                <a target="_blank" v-bind:href='"http://"+device.ip+":"+device.port+"/term"'>
+                    终端
+                </a>
+            </p>
+            <form class="navbar-form navbar-left">
+                <button class="btn btn-sm btn-default" @click.prevent="toggleScreen">
+                    <i v-if="screenWS" class="fa fa-eye"></i>
+                    <i v-else class="fa fa-eye-slash"></i>
+                </button>
+            </form>
+            <p class="navbar-text">
+                <a href="#" onclick="javascript:history.back(-1);">标签页关闭</a>，设备自动释放</p>
+        </div>
+    </nav>
+    <div id="upper">
+        <div id="left">
+            <div class="text-center" style="background-color:white">
+
+            </div>
+            <section id="screen">
+                <canvas id="bgCanvas0" class="canvas-bg" v-bind:style="canvasStyle" style="z-index: 10"></canvas>
+
+                <canvas id="fgCanvas" class="canvas-fg" v-bind:style="canvasStyle"></canvas>
+                <span class="finger finger-0" style="transform: translate3d(200px, 100px, 0px)" style="z-index: 11"></span>
+                <span class="finger finger-1" style="transform: translate3d(200px, 100px, 0px)"></span>
+{#                <img style="z-index: 10" v-if="loading" src="/static/loading.svg">#}
+
+            </section>
+            <section id="footer">
+                <button class="btn" @click="keyevent('power')">
+                    <i class="fa fa-power-off color-red"></i> Power</button>
+                <button class="btn" @click="keyevent('menu')">
+                    <i class="glyphicon glyphicon-menu-hamburger"></i> Menu</button>
+                <button class="btn" @click="keyevent('home')">
+                    <i class="fa fa-home"></i> Home</button>
+                <button class="btn" @click="keyevent('back')">
+                    <i class="fa fa-chevron-left"></i> Back</button>
+            </section>
+        </div>
+        <div id="vertical-gap1" class="handle vertical-gap"></div>
+        <div id="right">
+
+            <div class="row box">
+                <div class="col-md-12 box">
+
+                    <div id="box" style="height: 500px">
+                        <!-- table start-->
+
+{#                        <ul id="shot_phone" >#}
+{#                            <li v-for="v in json.list" style="float: left;">#}
+{#                                <p style="background: #e7e7e7 ; text-align:center; margin-bottom: 0px;">{{v}}</p>#}
+{#                                <img v-bind:src="v.src" alt="" width="200" height="330"/>#}
+{#                            </li>#}
+{#                        </ul>#}
+                        <ul id="shot_phone" >
+                            <li v-for="v, index in deviceList" style="float: left;">
+                                <a v-if="index!=0" v-bind:href="v.remote">
+                                        <p style="background: #e7e7e7 ; text-align:center; margin-bottom: 0px;">{{v}}</p>
+                                        <img v-bind:src="v.src" alt="" width="180" height="330"/>
+
+
+{#                                    <canvas :id='"bgCanvas"+(index)' class="canvasStyle" width="120" height="240"  :alt="v.src"></canvas>#}
+                                      <!-- <h4>{{v.des}}</h4> -->
+                                </a>
+                            </li>
+                        </ul>
+
+                        <!-- table end-->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+              <span class="color-red">
+                <i class="fa fa-warning"></i> Error</span>
+                </h4>
+            </div>
+            <div class="modal-body">
+                <pre v-html="error"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/bootstrap.select/1.12.2/js/bootstrap-select.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jstree@3.3.4/dist/jstree.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@1.3.3/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/clipboard@1.5.12/dist/clipboard.min.js"></script>
+<script src="/static/js/notify.js"></script>
+<script src="/static/js/jquery-tiny-pubsub.js"></script>
+<script src='/static/dropzone/dropzone.min.js'></script>
+<script src='/static/js/common.js'></script>
+<script type="text/x-template" id="tab-item-component">
+    <div role="tabpanel" class="tab-pane" :class='{active: active == id}' :id="id">
+        <slot></slot>
+    </div>
+</script>
+<script>
+    var deviceList={{list | safe}}
+    var deviceIp = "{{ IP }}"
+    var devicePort = "{{ Port }}"
+    var deviceUdid = "{{ Udid }}"
+    var width = "{{ Width }}"
+    var height = "{{ Height }}"
+    console.log(width + " " + height)
+
+    console.log("Infos:", deviceIp, devicePort, deviceUdid)
+
+</script>
+<script src='/static/js/remote_synchronous.js'></script>
+<script type="text/javascript">
+    function refersh(){
+
+        $("#shot_phone li img").each(function(index,element) {
+            if (element.src.indexOf("?")!=-1){
+                src=element.src.substr(0,element.src.indexOf("?"))+"?t="+Math.random()
+            }else {
+                src=element.src+"?t="+Math.random()
+            }
+            $(this).attr({src:src});
+        });
+
+    }
+    setInterval(refersh, 5000)
+
+</script>
+
+</html>
