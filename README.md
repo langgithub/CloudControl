@@ -23,6 +23,7 @@
 ### 使用步骤
 1. 建立 atxserver 数据库（monogodb）。无需建立表
 2. python main.py 直接运行
+3. python -m uiautomator2 init -s 服务器ip:端口 （维持心跳）
 
 ### 遗留问题
 云机同步卡顿严重 chrome端通讯承受太多通讯压力，后期可改为服务端的批量minitouch
