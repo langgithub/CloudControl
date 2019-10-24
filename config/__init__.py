@@ -57,5 +57,5 @@ class YamlParser(object):
 #     raise Exception("不正确的environment")
 
 conf_file = '/default_dev.yaml'
-logger.info(f"加载配置文件:{conf_file}")
+logger.info(f"加载配置文件:{os.path.dirname(__file__)+conf_file}")
 conf = YamlParser(os.path.dirname(__file__)+conf_file)

@@ -50,4 +50,4 @@ SPIDER:
 
 # 服务器端口
 server:
-  port: 8001
+  port: 8000
