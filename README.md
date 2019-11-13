@@ -10,11 +10,11 @@
 
 ### 视频展示
 1. 基本功能
-![image](https://github.com/langgithub/CloudControl/blob/master/qunkong1.gif)
+![image](https://github.com/langgithub/CloudControl/blob/master/qunkong01.gif)
 2. 群控，批量点击与滑动
-![image](https://github.com/langgithub/CloudControl/blob/master/qunkong2.gif)
+![image](https://github.com/langgithub/CloudControl/blob/master/qunkong02.gif)
 3. 文件上传 群发
-![image](https://github.com/langgithub/CloudControl/blob/master/qunkong3.gif)
+![image](https://github.com/langgithub/CloudControl/blob/master/qunkong03.gif)
 
 ### 运行环境
 - mongodb
