@@ -33,11 +33,9 @@ class MotorHelper(object):
         """
         # /{conf.db_configs['db_name']}
         if conf.db_configs["user"]:
-            self.motor_uri = f"mongodb://{conf.db_configs['user']}:{conf.db_configs['passwd']}" \
-                f"@{conf.db_configs['host']}:{conf.db_configs['port']}"
+            self.motor_uri = conf.db_configs['url']
         else:
-            self.motor_uri = f"mongodb://{conf.db_configs['host']}:{conf.db_configs['port']}" \
-                f"/{conf.db_configs['db_name']}"
+            self.motor_uri = conf.db_configs['url']
         self.__connected()
 
     def __connected(self):

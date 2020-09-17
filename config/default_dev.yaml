@@ -1,8 +1,9 @@
 descption:  default config
 #数据库基本信息
 db_configs:
+  url: mongodb://127.0.0.1:27017
   type: mongo
-  host: 172.17.0.170
+  host: 127.0.0.1
   port: 27017
   user: admin
   passwd: Mongo2018914

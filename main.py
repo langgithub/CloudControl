@@ -58,8 +58,8 @@ async def init(_loop):
     setup_templates(app)
     # 启动服务
     # noinspection PyDeprecation
-    srv = await _loop.create_server(app.make_handler(), '172.17.2.36', conf.server["port"])
-    logger.info('http://172.17.2.36:'+str(conf.server["port"]))
+    srv = await _loop.create_server(app.make_handler(), '0.0.0.0', conf.server["port"])
+    logger.info('http://0.0.0.0:'+str(conf.server["port"]))
     return srv
 
 
