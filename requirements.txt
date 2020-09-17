@@ -1,10 +1,9 @@
 uiautomator2
 requests
-websockets
-cryptography
-motor
-aiohttp_session
-jinja2
-aiohttp
-aiohttp_jinja2
-motor
+websockets==7.0
+cryptography==2.4.2
+motor==2.0.0
+aiohttp-session==2.7.0
+Jinja2==2.11.2
+aiohttp==3.5.0
+aiohttp-jinja2==1.1.0
