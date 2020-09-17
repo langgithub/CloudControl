@@ -1,4 +1,4 @@
-uiautomator2
+uiautomator2==0.2.0
 requests
 websockets==7.0
 cryptography==2.4.2
